@@ -1,8 +1,9 @@
 import React from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
 import useAuth from "../hooks/useAuth";
 import { FiMessageSquare, FiSettings } from "../components/Icons";
 import toast from "react-hot-toast";
+import avatar from "../../public/pngwing.com.png";
 
 const NavBar = () => {
   const { isLoggingOut, logOut, authUser } = useAuth();
@@ -26,8 +27,9 @@ const NavBar = () => {
             >
               <div className="w-10 rounded-full">
                 <img
-                  alt="Tailwind CSS Navbar component"
-                  src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                  className="size-full object-cover"
+                  alt="avatar"
+                  src={authUser?.profilePic || avatar}
                 />
               </div>
             </div>
@@ -36,13 +38,18 @@ const NavBar = () => {
               className="menu menu-sm dropdown-content bg-base-300 rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
               <li>
-                <Link to="/profile" className="justify-between">
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `${isActive ? "bg-base-100" : ""} justify-between`
+                  }
+                >
                   Profile
                   <span className="badge">New</span>
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link to="/settings">Settings</Link>
+                <NavLink to="/settings">Settings</NavLink>
               </li>
               <li
                 onClick={async () => {

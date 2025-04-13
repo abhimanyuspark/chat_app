@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Message = require("../models/Message");
 const cloudinary = require("../config/cloudinary");
+const { io, getRecieverSocketId } = require("../config/socket");
 
 const getAllUsers = async (req, res) => {
   try {
@@ -25,8 +26,8 @@ const getMessages = async (req, res) => {
 
     const messages = await Message.find({
       $or: [
-        { sender: loginedUser, receiver: userToChat_Id },
-        { sender: userToChat_Id, receiver: loginedUser },
+        { senderId: loginedUser, receiverId: userToChat_Id },
+        { senderId: userToChat_Id, receiverId: loginedUser },
       ],
     });
     if (!messages) {
@@ -61,11 +62,16 @@ const sendMessage = async (req, res) => {
     }
 
     const newMessage = await Message.create({
-      sender: loginedUser,
+      senderId: loginedUser,
       receiverId,
       text,
       image: imageURL,
     });
+
+    const receiverSocketId = getRecieverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
@@ -74,4 +80,27 @@ const sendMessage = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, getMessages, sendMessage };
+const clearChat = async (req, res) => {
+  try {
+    const { id: userToChat_Id } = req.params;
+    const loginedUser = req.user._id;
+
+    const result = await Message.deleteMany({
+      $or: [
+        { senderId: loginedUser, receiverId: userToChat_Id },
+        { senderId: userToChat_Id, receiverId: loginedUser },
+      ],
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "No messages found to delete" });
+    }
+
+    res.status(200).json({ message: "Chat cleared successfully" });
+  } catch (error) {
+    console.error("Error during clearing chat:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = { getAllUsers, getMessages, sendMessage, clearChat };

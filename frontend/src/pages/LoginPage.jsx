@@ -27,7 +27,7 @@ const LoginPage = () => {
     await toast.promise(
       logIn(formData).then((res) => {
         if (res?.status === 200) {
-          navigate("/");
+          navigate("/", { replace: true });
         } else {
           throw new Error(res.message || "Login failed");
         }

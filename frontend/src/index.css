@@ -15,6 +15,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.scroll {
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.scroll::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;

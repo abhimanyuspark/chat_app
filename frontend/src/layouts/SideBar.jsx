@@ -1,12 +1,24 @@
 import React, { useEffect } from "react";
 import useChatStore from "../hooks/useChatStore";
-import { SideBarSkeleton } from "../components";
+import { Avatar, SideBarSkeleton } from "../components";
+import useAuth from "../hooks/useAuth";
+import { FiUser } from "../components/Icons";
 
 const SideBar = () => {
   return (
-    <aside className="w-full h-[calc(100vh-4rem)] overflow-y-auto pt-0 p-2">
+    <aside className="w-full h-[calc(100vh-4rem)] overflow-y-auto pr-1 bg-base-200">
+      <Header />
       <Content />
     </aside>
+  );
+};
+
+const Header = () => {
+  return (
+    <div className="sticky top-0 left-0 w-full h-14 flex items-center gap-4 px-6 border border-base-300">
+      <FiUser />
+      <p className="font-bold">Contacts</p>
+    </div>
   );
 };
 
@@ -18,7 +30,7 @@ const Content = () => {
   }, [getUsers]);
 
   return (
-    <ul className="flex flex-col gap-2 *:py-2 *:px-3 *:text-base-content *:rounded-md">
+    <ul className="flex flex-col gap-1 *:py-2 *:px-3 *:text-base-content">
       {isUsersLoading ? <SideBarSkeleton /> : ""}
       {users?.map((d, i) => (
         <Row user={d} key={i} />
@@ -29,22 +41,29 @@ const Content = () => {
 };
 
 const Row = ({ user }) => {
-  const { selectUser } = useChatStore();
+  const { selectUser, selectedUser } = useChatStore();
+  const { onlineUsers } = useAuth();
 
   return (
     <li
-      className="flex gap-2 items-center bg-base-200"
+      className={`${
+        selectedUser?._id === user?._id ? "bg-base-300" : ""
+      } flex gap-2 items-center hover:bg-base-300 cursor-pointer transition-colors`}
       onClick={() => {
         selectUser(user);
       }}
     >
-      <div className="rounded-full bg-base-200 size-10">
-        {/* <img src="" alt="image" /> */}
-      </div>
+      <Avatar user={user} />
 
       <div className="flex flex-col">
         <p className="text-sm">{user?.fullName}</p>
-        <span className="text-xs text-base-100">offline</span>
+        <span className="text-xs">
+          {onlineUsers.includes(user?._id) ? (
+            <span className="text-primary">online</span>
+          ) : (
+            <span className="text-gray-500">offline</span>
+          )}
+        </span>
       </div>
     </li>
   );

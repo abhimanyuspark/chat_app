@@ -165,7 +165,6 @@ export const Text = ({ name, onChange, value }) => {
     <div className="input bg-transparent w-full">
       <input
         type="text"
-        required
         value={value}
         autoComplete="off"
         placeholder="Type message..."

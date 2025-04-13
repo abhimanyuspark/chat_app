@@ -28,7 +28,7 @@ const SignUpPage = () => {
     await toast.promise(
       signUp(formData).then((res) => {
         if (res?.status === 201) {
-          navigate("/");
+          navigate("/", { replace: true });
         } else {
           throw new Error(res.message || "Login failed");
         }

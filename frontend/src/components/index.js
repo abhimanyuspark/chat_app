@@ -4,6 +4,8 @@ import Form_UI from "./Form_UI";
 import Messages from "./Messages";
 import SendMessageBox from "./SendMessageBox";
 import SideBarSkeleton from "./skeletons/SideBarSkeleton";
+import ChatSkeleton from "./skeletons/ChatSkeleton";
+import Avatar from "./Avatar";
 
 export {
   Loading,
@@ -12,4 +14,6 @@ export {
   Messages,
   SendMessageBox,
   SideBarSkeleton,
+  ChatSkeleton,
+  Avatar,
 };

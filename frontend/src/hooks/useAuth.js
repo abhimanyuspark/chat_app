@@ -1,7 +1,10 @@
 import { create } from "zustand";
 import axiosInstance from "../lib/axios";
+import { io } from "socket.io-client";
 
-const useAuth = create((set) => ({
+const url = "http://localhost:3000";
+
+const useAuth = create((set, get) => ({
   authUser: null,
 
   isSigningUp: false,
@@ -11,12 +14,41 @@ const useAuth = create((set) => ({
 
   isCheckingAuth: true,
 
+  onlineUsers: [],
+
+  socket: null,
+
+  connectSocket: () => {
+    const { authUser } = get();
+    if (!authUser || get().socket?.connected) {
+      return;
+    }
+
+    const socket = io(url, {
+      query: {
+        userId: authUser?._id,
+      },
+    });
+    socket.connect();
+
+    set({ socket: socket });
+
+    socket.on("getOnlineUsers", (userIds) => {
+      set({ onlineUsers: userIds });
+    });
+  },
+
+  disConnectSocket: () => {
+    if (get().socket?.connected) get().socket?.disconnect();
+  },
+
   checkAuth: async () => {
     try {
       const response = await axiosInstance.get("/auth/check");
       set({
         authUser: response?.data,
       });
+      get().connectSocket();
     } catch (error) {
       console.log("useAuth check Error" + error);
       set({
@@ -36,6 +68,7 @@ const useAuth = create((set) => ({
       set({
         authUser: response.data,
       });
+      get().connectSocket();
       return response;
     } catch (error) {
       console.log("useAuth signup Error : " + error);
@@ -53,6 +86,7 @@ const useAuth = create((set) => ({
       set({
         authUser: response.data,
       });
+      get().connectSocket();
       return response;
     } catch (error) {
       console.log("useAuth login Error : " + error);
@@ -70,6 +104,7 @@ const useAuth = create((set) => ({
       set({
         authUser: null,
       });
+      get().disConnectSocket();
       return res;
     } catch (error) {
       console.log("useAuth logout Error" + error);
