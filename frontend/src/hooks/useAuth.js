@@ -2,7 +2,8 @@ import { create } from "zustand";
 import axiosInstance from "../lib/axios";
 import { io } from "socket.io-client";
 
-const url = "http://localhost:3000";
+const url =
+  import.meta.env.MODE === "development" ? "http://localhost:3000" : "/";
 
 const useAuth = create((set, get) => ({
   authUser: null,
