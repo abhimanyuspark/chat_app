@@ -8,7 +8,6 @@ const cors_options = require("./config/cors_options");
 const { app, server } = require("./config/socket");
 
 const PORT = process.env.PORT;
-const rootDir = path.resolve();
 
 app.use(cors(cors_options));
 
@@ -21,10 +20,10 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/message", require("./routes/message"));
 
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(rootDir, "../frontend/dist")));
+  app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.join(rootDir, "../frontend", "dist", "index.html"));
+    res.sendFile(path.join(__dirname, "../../frontend", "dist", "index.html"));
   });
 }
 
