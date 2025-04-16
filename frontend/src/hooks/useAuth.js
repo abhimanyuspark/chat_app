@@ -66,7 +66,7 @@ const useAuth = create((set, get) => ({
     try {
       const response = await axiosInstance.post("/auth/signup", formData);
       set({
-        authUser: response.data,
+        authUser: response?.data,
       });
       get().connectSocket();
       return response;
@@ -84,7 +84,7 @@ const useAuth = create((set, get) => ({
     try {
       const response = await axiosInstance.post("/auth/login", formData);
       set({
-        authUser: response.data,
+        authUser: response?.data,
       });
       get().connectSocket();
       return response;
