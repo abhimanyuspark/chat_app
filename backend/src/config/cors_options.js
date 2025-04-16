@@ -1,4 +1,8 @@
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://chat-app-9u1r.onrender.com",
+];
 
 const cors_options = {
   origin: (origin, callBack) => {
