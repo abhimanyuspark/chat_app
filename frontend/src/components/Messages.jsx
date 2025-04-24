@@ -174,7 +174,7 @@ const Content = ({ d, isSender }) => {
           <div className="size-50 rounded object-cover relative group/item transition-all">
             <img src={d?.image} alt="image" className="size-full" />
 
-            <div className="group-hover/item:visible invisible absolute top-0 left-0 size-full bg-[rgba(0,0,0,0.5)] flex items-center justify-center cursor-pointer">
+            <div className="group-hover/item:visible visible sm:invisible absolute top-0 left-0 size-full bg-[rgba(0,0,0,0.5)] flex items-center justify-center cursor-pointer">
               <button
                 type="button"
                 className="btn btn-accent text-accent-content"
