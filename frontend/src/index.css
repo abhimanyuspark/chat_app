@@ -15,6 +15,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+body{
+  height: 100dvh;
+}
+
 .scroll {
   scrollbar-width: none; /* For Firefox */
   -ms-overflow-style: none; /* For Internet Explorer and Edge */
@@ -30,5 +34,5 @@ h1 {
 }
 
 .adjusted-height {
-  height: calc(100dvh - 4rem);
+  height: calc(100vh - 4rem);
 }
