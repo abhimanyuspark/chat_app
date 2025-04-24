@@ -29,14 +29,14 @@ const LoginPage = () => {
         if (res?.status === 200) {
           navigate("/", { replace: true });
         } else {
-          throw new Error(res.message || "Login failed");
+          throw new Error(res?.message || "Login failed");
         }
       }),
       {
         loading: "Logging...",
         success: "Login successfully",
         error: (err) => {
-          return err.message;
+          return err?.message;
         },
       }
     );

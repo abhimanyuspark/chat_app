@@ -3,6 +3,7 @@ import useAuth from "../hooks/useAuth";
 import { Email, FullName } from "../components/Inputs";
 import toast from "react-hot-toast";
 import avatar from "../../public/pngwing.com.png";
+import { FaCamera } from "../components/Icons";
 
 const Profile = () => {
   const { isUpdatingProfile, authUser, updateProfile } = useAuth();
@@ -50,8 +51,8 @@ const Profile = () => {
   }, [authUser]);
 
   return (
-    <div className="flex justify-center items-center py-10">
-      <div className="flex gap-8 flex-col py-8 px-4 rounded-md bg-base-300 w-100 sm:w-120">
+    <div className="flex justify-center items-center py-4 sm:py-10">
+      <div className="flex gap-8 flex-col py-8 px-4 rounded-md bg-base-300 w-[90%] sm:w-[80%] md:w-[60%] lg:w-[50%] xl:w-[40%]">
         <div className="flex gap-2 flex-col items-center justify-center">
           <h3 className="text-xl font-bold">Profile</h3>
           <p className="text-sm">Your Profile Information</p>
@@ -89,29 +90,37 @@ const Profile = () => {
 const ProfileImage = ({ image, uploadImage, isLoading }) => {
   return (
     <div className="flex justify-center flex-col items-center gap-4">
-      <label className="rounded-full size-35 overflow-hidden bg-gray-500 relative hover:outline-1 hover:outline-offset-2 cursor-pointer">
-        <img
-          src={image ? image : avatar}
-          alt="Profile"
-          className="size-full object-cover"
-        />
+      <label className="avatar cursor-pointer hover:outline-offset-2 hover:outline-primary hover:outline rounded-full">
+        <div className="w-40 rounded-full relative">
+          <img
+            src={image ? image : avatar}
+            alt="Profile"
+            className="size-full object-cover"
+          />
 
-        <input
-          type="file"
-          accept="image/*"
-          disabled={isLoading}
-          onChange={(e) => {
-            uploadImage(e);
-          }}
-          className="hidden"
-        />
+          <input
+            type="file"
+            accept="image/*"
+            disabled={isLoading}
+            onChange={(e) => {
+              uploadImage(e);
+            }}
+            className="hidden"
+          />
 
-        {isLoading && (
-          <div className="absolute size-full z-10 top-0 left-0 bg-[rgba(0,0,0,0.5)]"></div>
-        )}
+          {isLoading && (
+            <div className="absolute w-full h-full text-sm flex items-center justify-center z-10 top-0 left-0 bg-[rgba(0,0,0,0.5)]">
+              Loading...
+            </div>
+          )}
+        </div>
+
+        <span className="p-2 bg-base-100 rounded-full absolute bottom-0 right-0">
+          <FaCamera className="size-5 text-primary" />
+        </span>
       </label>
 
-      <p className="text-xs flex items-center gap-2 text-base-100">
+      <p className="text-xs flex items-center gap-2 text-primary text-center">
         {isLoading && <span className="loading loading-spinner"></span>}
         {isLoading
           ? "Updating Profile ..."

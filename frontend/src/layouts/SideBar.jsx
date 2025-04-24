@@ -15,7 +15,7 @@ const SideBar = () => {
 
 const Header = () => {
   return (
-    <div className="sticky top-0 left-0 w-full h-14 flex items-center gap-4 px-6 border border-base-300">
+    <div className="sticky top-0 left-0 w-full h-14 flex items-center gap-4 px-6 border border-base-300 z-50 bg-base-200">
       <FiUser />
       <p className="font-bold">Contacts</p>
     </div>
@@ -26,8 +26,8 @@ const Content = () => {
   const { users, getUsers, isUsersLoading } = useChatStore();
 
   useEffect(() => {
-    getUsers();
-  }, [getUsers]);
+    if (users?.length === 0) getUsers();
+  }, [getUsers, users]);
 
   return (
     <ul className="flex flex-col gap-1 *:py-2 *:px-3 *:text-base-content">
@@ -35,7 +35,7 @@ const Content = () => {
       {users?.map((d, i) => (
         <Row user={d} key={i} />
       ))}
-      {users?.length === 0 && <NotFoundRow />}
+      {isUsersLoading ? "" : users?.length === 0 && <NotFoundRow />}
     </ul>
   );
 };

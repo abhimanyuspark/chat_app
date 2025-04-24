@@ -7,7 +7,7 @@ import { FiPaperclip, FiSend } from "../components/Icons";
 const Settings = () => {
   return (
     <div className="flex justify-center p-2">
-      <div className="w-3xl flex gap-8 flex-col">
+      <div className="w-[90%] sm:w-[80%] md:w-[70%] flex gap-8 flex-col">
         <div className="flex gap-2 flex-col">
           <h4 className="font-bold text-lg">Theme</h4>
           <p className="text-base-content text-sm">
@@ -35,7 +35,7 @@ const List = () => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="grid grid-cols-8 gap-y-3 gap-x-1">
+    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-3 gap-x-1">
       {THEMES?.map((d, i) => (
         <div
           className={`${

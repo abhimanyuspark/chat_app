@@ -74,7 +74,7 @@ const useAuth = create((set, get) => ({
     } catch (error) {
       console.log("useAuth signup Error : " + error);
       set({ authUser: null });
-      return error.response.data;
+      return error?.response?.data;
     } finally {
       set({ isSigningUp: false });
     }
@@ -92,7 +92,7 @@ const useAuth = create((set, get) => ({
     } catch (error) {
       console.log("useAuth login Error : " + error);
       set({ authUser: null });
-      return error.response.data;
+      return error?.response?.data;
     } finally {
       set({ isLoggingIng: false });
     }
@@ -109,7 +109,7 @@ const useAuth = create((set, get) => ({
       return res;
     } catch (error) {
       console.log("useAuth logout Error" + error);
-      return error.response.data.message;
+      return error?.response?.data?.message;
     } finally {
       set({ isLoggingOut: false });
     }
@@ -122,12 +122,12 @@ const useAuth = create((set, get) => ({
     try {
       const response = await axiosInstance.post("/auth/profile", data);
       set({
-        authUser: response.data,
+        authUser: response?.data,
       });
       return response;
     } catch (error) {
       console.log("useAuth update profile pic Error " + error);
-      return error.response.data;
+      return error?.response?.data;
     } finally {
       set({
         isUpdatingProfile: false,

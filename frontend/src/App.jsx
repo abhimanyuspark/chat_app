@@ -26,12 +26,11 @@ function App() {
           </Route>
         </Route>
         {/* end require */}
+
         <Route element={<Layout />}>
           <Route path="/settings" element={<Settings />} />
-
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
-
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

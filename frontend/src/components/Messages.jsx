@@ -2,9 +2,8 @@ import React, { useEffect, useRef } from "react";
 import useChatStore from "../hooks/useChatStore";
 import { Avatar, ChatSkeleton, SendMessageBox } from "../components";
 import useAuth from "../hooks/useAuth";
-import { FiMoreHorizontal } from "./Icons";
+import { FiMoreHorizontal, FiArrowLeft, FiDownload } from "./Icons";
 import { formatDate } from "../utils/utils";
-import { FiDownload } from "react-icons/fi";
 import { saveAs } from "file-saver";
 
 const Messages = () => {
@@ -47,7 +46,7 @@ const Messages = () => {
   return (
     <div className="">
       <Header />
-      <div className="bg-base-100 p-2 h-[calc(100vh-11.2rem)] overflow-auto scroll-smooth scroll">
+      <div className="bg-base-100 p-2 h-[calc(100vh-11.2rem)] overflow-auto scroll-smooth">
         {content}
       </div>
       <SendMessageBox />
@@ -56,12 +55,16 @@ const Messages = () => {
 };
 
 const Header = () => {
-  const { selectedUser } = useChatStore();
+  const { selectedUser, selectUser } = useChatStore();
   const { onlineUsers } = useAuth();
 
   return (
     <div className="flex justify-between items-center bg-base-300 py-2 px-3 z-10 top-0 left-0 w-full">
       <div className="flex items-center gap-2 ">
+        <div onClick={() => selectUser(null)} className="cursor-pointer">
+          <FiArrowLeft className="size-5" />
+        </div>
+
         <Avatar user={selectedUser} />
 
         <div className="flex flex-col">

@@ -3,7 +3,7 @@ import React from "react";
 const SideBarSkeleton = () => {
   return (
     <>
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <li className="w-full" key={i}>
           <div className="flex items-center gap-4">
             <div className="skeleton h-10 w-10 shrink-0 rounded-full"></div>
