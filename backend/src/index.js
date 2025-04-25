@@ -24,7 +24,7 @@ if (process.env.NODE_ENV === "production") {
 
   app.use((req, res) => {
     res
-      .status(404)
+      .status(200)
       .sendFile(path.join(__dirname, "../../frontend", "dist", "index.html"));
   });
 }
