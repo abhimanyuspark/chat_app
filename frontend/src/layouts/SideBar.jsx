@@ -41,30 +41,44 @@ const Content = () => {
 };
 
 const Row = ({ user }) => {
-  const { selectUser, selectedUser } = useChatStore();
+  const { selectUser, selectedUser, unreadMessages } = useChatStore();
   const { onlineUsers } = useAuth();
+
+  // Get unread count for this user
+  const unreadCount = unreadMessages?.[user?._id] || 0;
 
   return (
     <li
       className={`${
         selectedUser?._id === user?._id ? "bg-base-300" : ""
-      } flex gap-2 items-center hover:bg-base-300 cursor-pointer transition-colors`}
+      } flex justify-between items-center hover:bg-base-300 cursor-pointer transition-colors`}
       onClick={() => {
         selectUser(user);
       }}
     >
-      <Avatar user={user} />
+      <div className="flex gap-2 items-center">
+        <div className="relative">
+          <Avatar user={user} />
+        </div>
 
-      <div className="flex flex-col">
-        <p className="text-sm">{user?.fullName}</p>
-        <span className="text-xs">
-          {onlineUsers.includes(user?._id) ? (
-            <span className="text-primary">online</span>
-          ) : (
-            <span className="text-gray-500">offline</span>
-          )}
-        </span>
+        <div className="flex flex-col">
+          <p className="text-sm">{user?.fullName}</p>
+          <span className="text-xs">
+            {onlineUsers.includes(user?._id) ? (
+              <span className="text-primary">online</span>
+            ) : (
+              <span className="text-gray-500">offline</span>
+            )}
+          </span>
+        </div>
       </div>
+
+      {/* Unread message badge */}
+      {unreadCount > 0 && (
+        <div className="badge badge-primary badge-sm">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </div>
+      )}
     </li>
   );
 };

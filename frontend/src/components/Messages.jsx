@@ -14,11 +14,46 @@ const Messages = () => {
     selectedUser,
     subscribeToMessage,
     unSubscribeToMessage,
+    setWindowFocus,
+    markMessagesAsRead,
   } = useChatStore();
 
+  // Request notification permission when component mounts
+  useEffect(() => {
+    if (
+      Notification.permission !== "granted" &&
+      Notification.permission !== "denied"
+    ) {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Add window focus/blur event listeners
+  useEffect(() => {
+    const handleFocus = () => {
+      setWindowFocus(true);
+      // Mark messages as read when window gets focus
+      if (selectedUser?._id) {
+        markMessagesAsRead(selectedUser._id);
+      }
+    };
+
+    const handleBlur = () => {
+      setWindowFocus(false);
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [setWindowFocus, markMessagesAsRead, selectedUser]);
+
+  // Subscribe to messages
   useEffect(() => {
     getMessages(selectedUser?._id);
-
     subscribeToMessage();
 
     return () => {
