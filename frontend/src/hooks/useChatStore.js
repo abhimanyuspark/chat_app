@@ -9,15 +9,15 @@ const useChatStore = create((set, get) => ({
   selectedUser: null,
   isMessageLoading: false,
   isUsersLoading: false,
-  unreadMessages: {}, // Track unread messages by user ID
-  windowFocused: true, // Track if window is focused
+  unreadMessages: {},
+  windowFocused: true,
 
-  // Set window focus state
+  // Set window focus status
   setWindowFocus: (isFocused) => {
     set({ windowFocused: isFocused });
   },
 
-  // Mark messages as read for a specific user
+  // Mark messages as read
   markMessagesAsRead: (userId) => {
     set((state) => {
       const updatedUnreadMessages = { ...state.unreadMessages };
@@ -25,33 +25,26 @@ const useChatStore = create((set, get) => ({
       return { unreadMessages: updatedUnreadMessages };
     });
 
-    // Reset document title if this was the user causing notifications
     if (document.title.includes("New message")) {
       document.title = "Chat App";
     }
   },
 
+  // Get messages for the selected user
   getMessages: async (id) => {
-    set({
-      isMessageLoading: true,
-    });
+    set({ isMessageLoading: true });
     try {
       const res = await axiosInstance.get(`/message/${id}`);
-      set({
-        messages: res.data,
-      });
-
-      // Mark messages as read when fetched
+      set({ messages: res.data });
       get().markMessagesAsRead(id);
     } catch (error) {
       console.error("getting messages: " + error);
     } finally {
-      set({
-        isMessageLoading: false,
-      });
+      set({ isMessageLoading: false });
     }
   },
 
+  // Send a new message
   sendMessage: async (data) => {
     const { selectedUser } = get();
     try {
@@ -66,54 +59,28 @@ const useChatStore = create((set, get) => ({
     }
   },
 
-  deleteMessages: async () => {
-    const { selectedUser } = get();
-    set({
-      isMessageLoading: true,
-    });
-    try {
-      await axiosInstance.delete(`/message/clear-chat/${selectedUser?._id}`);
-      // Clear the messages state since all messages with the selected user are deleted
-      set({
-        messages: [],
-        selectedUser: null,
-      });
-    } catch (error) {
-      console.error("deleteMessages: " + error);
-    } finally {
-      set({
-        isMessageLoading: false,
-      });
-    }
-  },
-
+  // Get users
   getUsers: async () => {
-    set({
-      isUsersLoading: true,
-    });
+    set({ isUsersLoading: true });
     try {
       const res = await axiosInstance.get("/message/users");
-      set({
-        users: res?.data,
-      });
+      set({ users: res?.data });
     } catch (error) {
       console.error("getting users: " + error);
     } finally {
-      set({
-        isUsersLoading: false,
-      });
+      set({ isUsersLoading: false });
     }
   },
 
+  // Select a user for chat
   selectUser: (user) => {
     set({ selectedUser: user });
-
-    // When selecting a user, mark their messages as read
     if (user) {
       get().markMessagesAsRead(user._id);
     }
   },
 
+  // Subscribe to real-time messages
   subscribeToMessage: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
@@ -123,26 +90,18 @@ const useChatStore = create((set, get) => ({
     socket.on("newMessage", (newMessage) => {
       const { windowFocused } = get();
 
-      // Add message to state if it's from the selected user
       if (newMessage?.senderId === selectedUser?._id) {
-        set({
-          messages: [...get().messages, newMessage],
-        });
-
-        // Only mark as read if window is focused
+        set({ messages: [...get().messages, newMessage] });
         if (windowFocused) {
           get().markMessagesAsRead(selectedUser._id);
         } else {
-          // Play notification sound and update unread count
           get().handleNewMessageNotification(newMessage, selectedUser);
         }
       } else {
-        // Message from another user - handle notifications
         const sender = get().users.find(
           (user) => user._id === newMessage.senderId
         );
         if (sender) {
-          // Update unread count for this sender
           set((state) => {
             const updatedUnreadMessages = { ...state.unreadMessages };
             updatedUnreadMessages[sender._id] =
@@ -150,45 +109,77 @@ const useChatStore = create((set, get) => ({
             return { unreadMessages: updatedUnreadMessages };
           });
 
-          // Trigger notification for message from non-active chat
           get().handleNewMessageNotification(newMessage, sender);
         }
       }
     });
   },
 
+  // Handle new message notifications
   handleNewMessageNotification: (message, sender) => {
     const { windowFocused } = get();
 
-    // Play notification sound
-    const notificationSound = new Audio(notificationAudio); // Create this file in your public folder
-    notificationSound
-      .play()
-      .catch((err) => console.log("Error playing sound", err));
+    const notificationSound = new Audio(notificationAudio);
+    notificationSound.play().catch((err) => {
+      console.log("Error playing sound", err);
+    });
 
-    // Update document title with unread count
     const totalUnreadCount = Object.values(get().unreadMessages).reduce(
       (a, b) => a + b,
       0
     );
+
     if (totalUnreadCount > 0 && !windowFocused) {
       document.title = `(${totalUnreadCount}) New message - Chat App`;
     }
 
-    // Show browser notification if permitted
     if (Notification.permission === "granted" && !windowFocused) {
       new Notification(`New message from ${sender.fullName}`, {
         body: message.text
           ? message.text.substring(0, 50)
           : "New image message",
-        icon: sender.profilePic || "/default-avatar.png", // Ensure you have a default avatar
+        icon: sender.profilePic || "/default-avatar.png",
       });
     }
   },
 
+  // Unsubscribe from real-time messages
   unSubscribeToMessage: () => {
     const socket = useAuth.getState().socket;
     socket.off("newMessage");
+  },
+
+  // Delete selected messages for the user
+  deleteMessagesForMe: async (messageIds) => {
+    try {
+      await axiosInstance.put("/message/delete-for-me", { messageIds });
+      set((state) => ({
+        messages: state.messages.filter((msg) => !messageIds.includes(msg._id)),
+      }));
+    } catch (err) {
+      console.error("Delete for me failed:", err);
+    }
+  },
+
+  // Delete selected messages for everyone
+  deleteMessagesForEveryone: async (messageIds) => {
+    try {
+      await axiosInstance.put("/message/delete-for-everyone", { messageIds });
+      set((state) => ({
+        messages: state.messages.map((msg) =>
+          messageIds.includes(msg._id)
+            ? {
+                ...msg,
+                text: "[Deleted]",
+                image: null,
+                deletedForEveryone: true,
+              }
+            : msg
+        ),
+      }));
+    } catch (err) {
+      console.error("Delete for everyone failed:", err);
+    }
   },
 }));
 

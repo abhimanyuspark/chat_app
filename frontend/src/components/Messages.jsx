@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import useChatStore from "../hooks/useChatStore";
-import { Avatar, ChatSkeleton, SendMessageBox } from "../components";
 import useAuth from "../hooks/useAuth";
+import { Avatar, ChatSkeleton, SendMessageBox } from "../components";
 import { FiMoreHorizontal, FiArrowLeft, FiDownload } from "./Icons";
 import { formatDate } from "../utils/utils";
 import { saveAs } from "file-saver";
@@ -16,23 +16,30 @@ const Messages = () => {
     unSubscribeToMessage,
     setWindowFocus,
     markMessagesAsRead,
+    deleteMessagesForMe,
+    deleteMessagesForEveryone,
+    unreadMessages,
   } = useChatStore();
 
-  // Request notification permission when component mounts
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const messageEndRef = useRef(null);
+
+  // Request notification permission
   useEffect(() => {
     if (
       Notification.permission !== "granted" &&
       Notification.permission !== "denied"
     ) {
-      Notification.requestPermission();
+      Notification.requestPermission().catch((err) =>
+        console.error("Notification permission error:", err)
+      );
     }
   }, []);
 
-  // Add window focus/blur event listeners
+  // Handle window focus and blur events
   useEffect(() => {
     const handleFocus = () => {
       setWindowFocus(true);
-      // Mark messages as read when window gets focus
       if (selectedUser?._id) {
         markMessagesAsRead(selectedUser._id);
       }
@@ -49,11 +56,13 @@ const Messages = () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("blur", handleBlur);
     };
-  }, [setWindowFocus, markMessagesAsRead, selectedUser]);
+  }, [setWindowFocus, markMessagesAsRead, selectedUser?._id]);
 
-  // Subscribe to messages
+  // Fetch messages and manage subscriptions
   useEffect(() => {
-    getMessages(selectedUser?._id);
+    if (selectedUser?._id) {
+      getMessages(selectedUser._id);
+    }
     subscribeToMessage();
 
     return () => {
@@ -62,26 +71,78 @@ const Messages = () => {
   }, [
     getMessages,
     selectedUser?._id,
-    unSubscribeToMessage,
     subscribeToMessage,
+    unSubscribeToMessage,
   ]);
+
+  // Scroll to the latest message
+  useEffect(() => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  const toggleMessageSelection = (id) => {
+    setSelectedMessages((prev) =>
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+    );
+  };
+
+  const isSelected = (id) => selectedMessages.includes(id);
 
   let content = null;
 
   if (isMessageLoading) {
     content = <ChatSkeleton />;
   } else if (messages.length > 0) {
-    content = <Chat />;
+    content = (
+      <Chat
+        messages={messages}
+        toggleMessageSelection={toggleMessageSelection}
+        isSelected={isSelected}
+        messageEndRef={messageEndRef}
+      />
+    );
   } else {
     content = (
       <p className="text-sm text-center text-accent">Start chatting here...</p>
     );
   }
 
+  const ShowONSelect = () => {
+    if (selectedMessages.length > 0) {
+      return (
+        <div className="flex gap-2 items-center justify-center p-2">
+          <button
+            type="button"
+            className="btn btn-accent btn-sm text-accent-content"
+            onClick={() => {
+              setSelectedMessages([]);
+              deleteMessagesForMe(selectedMessages);
+            }}
+          >
+            Delete for me
+          </button>
+          <button
+            type="button"
+            className="btn btn-accent btn-sm text-accent-content"
+            onClick={() => {
+              setSelectedMessages([]);
+              deleteMessagesForEveryone(selectedMessages);
+            }}
+          >
+            Delete for everyone
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="">
-      <Header />
-      <div className="bg-base-100 p-2 h-[calc(100vh-11.2rem)] overflow-auto scroll-smooth">
+    <div className="flex flex-col h-full">
+      <Header Show={ShowONSelect} />
+      <div className="bg-base-100 p-2 flex-1 overflow-auto scroll-smooth">
         {content}
       </div>
       <SendMessageBox />
@@ -89,13 +150,14 @@ const Messages = () => {
   );
 };
 
-const Header = () => {
+// Header component
+const Header = ({ Show }) => {
   const { selectedUser, selectUser } = useChatStore();
   const { onlineUsers } = useAuth();
 
   return (
     <div className="flex justify-between items-center bg-base-300 py-2 px-3 z-10 top-0 left-0 w-full">
-      <div className="flex items-center gap-2 ">
+      <div className="flex items-center gap-2">
         <div onClick={() => selectUser(null)} className="cursor-pointer">
           <FiArrowLeft className="size-5" />
         </div>
@@ -114,13 +176,14 @@ const Header = () => {
         </div>
       </div>
 
+      <Show />
       <Menu />
     </div>
   );
 };
 
 const Menu = () => {
-  const { selectUser, deleteMessages } = useChatStore();
+  const { selectUser } = useChatStore();
 
   return (
     <div className="dropdown dropdown-end">
@@ -133,7 +196,7 @@ const Menu = () => {
       </div>
       <ul
         tabIndex={0}
-        className="menu menu-sm dropdown-content bg-base-300 rounded-box z-1 mt-3 w-52 p-2 shadow *"
+        className="menu menu-sm dropdown-content bg-base-300 rounded-box z-1 mt-3 w-52 p-2 shadow"
       >
         <li
           onClick={() => {
@@ -142,56 +205,50 @@ const Menu = () => {
         >
           <p className="p-2 text-md">Close Chat</p>
         </li>
-        {/* <li
-          onClick={async () => {
-            await deleteMessages();
-          }}
-        >
-          <p className="p-2 text-md">Clear Chat</p>
-        </li> */}
       </ul>
     </div>
   );
 };
 
-const Chat = () => {
-  const { messages } = useChatStore();
+// Chat component to display messages
+const Chat = ({
+  messages,
+  toggleMessageSelection,
+  isSelected,
+  messageEndRef,
+}) => {
   const { authUser } = useAuth();
 
-  const messageEndRef = useRef(null);
-
   const isSender = (d) => d?.senderId === authUser?._id;
-
-  useEffect(() => {
-    if (messageEndRef.current && messages) {
-      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
+  const deltedForMe = (d) => d?.deletedFor?.includes(authUser?._id);
 
   return (
-    <div className="">
-      {messages?.map((d, i) => {
-        if (isSender(d)) {
-          return (
-            <div ref={messageEndRef} className="chat chat-end" key={i}>
-              <Content d={d} isSender={isSender} />
-            </div>
-          );
-        } else {
-          return (
-            <div ref={messageEndRef} className="chat chat-start" key={i}>
-              <Content d={d} isSender={isSender} />
-            </div>
-          );
-        }
-      })}
+    <div className="flex flex-col">
+      {messages?.map((d, i) => (
+        <div
+          className={`chat p-0 ${isSender(d) ? "chat-end" : "chat-start"} ${
+            isSelected(d._id) ? "bg-base-300" : ""
+          }`}
+          key={i}
+          ref={i === messages.length - 1 ? messageEndRef : null}
+        >
+          {!deltedForMe(d) && (
+            <Content
+              d={d}
+              isSender={isSender}
+              toggleMessageSelection={toggleMessageSelection}
+              isSelected={isSelected}
+            />
+          )}
+        </div>
+      ))}
     </div>
   );
 };
 
-const Content = ({ d, isSender }) => {
+const Content = ({ d, isSender, toggleMessageSelection, isSelected }) => {
   const onDownloadImage = (imageUrl, fileName = "downloaded-image") => {
-    saveAs(imageUrl, fileName); // Put your image URL here.
+    saveAs(imageUrl, fileName);
   };
 
   return (
@@ -204,20 +261,23 @@ const Content = ({ d, isSender }) => {
             ? "bg-primary text-primary-content"
             : "bg-neutral text-neutral-content"
         }`}
+        onClick={() => toggleMessageSelection(d._id)}
       >
         {d?.image && (
           <div className="size-50 rounded object-cover relative group/item transition-all">
             <img src={d?.image} alt="image" className="size-full" />
 
-            <div className="group-hover/item:visible visible sm:invisible absolute top-0 left-0 size-full bg-[rgba(0,0,0,0.5)] flex items-center justify-center cursor-pointer">
-              <button
-                type="button"
-                className="btn btn-accent text-accent-content"
-                onClick={() => onDownloadImage(d?.image, "chat-image")}
-              >
-                <FiDownload className="size-5" />
-              </button>
-            </div>
+            {!isSelected(d._id) && (
+              <div className="group-hover/item:visible visible sm:invisible absolute top-0 left-0 size-full bg-[rgba(0,0,0,0.5)] flex items-center justify-center cursor-pointer">
+                <button
+                  type="button"
+                  className="btn btn-accent text-accent-content"
+                  onClick={() => onDownloadImage(d?.image, "chat-image")}
+                >
+                  <FiDownload className="size-5" />
+                </button>
+              </div>
+            )}
           </div>
         )}
         {d?.text}

@@ -19,6 +19,20 @@ const messageSchema = new Schema(
     image: {
       type: String,
     },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+    deletedFor: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    deletedForEveryone: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
